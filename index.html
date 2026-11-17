@@ -139,6 +139,14 @@
             <button id="btnCopyLink" class="btn ok">复制链接</button>
             <a id="btnOpenLink" class="btn" target="_blank" rel="noopener">打开看看</a>
           </div>
+          <div class="qrwrap">
+            <canvas id="qrCanvas" class="qr"></canvas>
+            <div class="row">
+              <button id="btnQrDownload" class="btn">下载二维码</button>
+              <button id="btnQrPrint" class="btn">打印二维码</button>
+            </div>
+            <div class="hint">学生用平板或手机扫码即可打开作业。</div>
+          </div>
         </div>
 
         <hr class="sep" />
@@ -220,6 +228,8 @@
   <script src="js/azure.js"></script>
   <script src="js/recorder.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/vendor/qrcode.js"></script>
+  <script src="js/qr.js"></script>
   <script src="js/admin.js"></script>
 </body>
 </html>

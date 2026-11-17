@@ -215,10 +215,16 @@ async function openPublish(){
   loadAssignments();
 }
 
-function showLink(url){
+let qrTitle = "";
+
+function showLink(url, title){
   $("#pubLink").value = url;
   $("#btnOpenLink").href = url;
   $("#pubResult").classList.remove("hidden");
+  qrTitle = title || $("#pubTitle").value.trim() || "朗读作业";
+  const ok = drawQrCard($("#qrCanvas"), url, qrTitle);
+  $("#btnQrDownload").disabled = !ok;
+  $("#btnQrPrint").disabled = !ok;
   $("#pubLink").select();
 }
 
@@ -282,7 +288,14 @@ async function loadAssignments(){
       cp.onclick = async ()=>{ cp.textContent = (await copyText(url)) ? "已复制 ✓" : "复制失败"; setTimeout(()=> cp.textContent = "复制链接", 1500); };
       const op = document.createElement("a");
       op.className = "btn"; op.textContent = "打开"; op.href = url; op.target = "_blank"; op.rel = "noopener";
-      row.append(meta, sp, cp, op);
+      const qr = document.createElement("button");
+      qr.className = "btn"; qr.textContent = "二维码";
+      qr.onclick = ()=>{
+        showLink(url, a.title);
+        setMsg("#pubMsg", `「${a.title}」（${a.className}）的链接和二维码：`, "");
+        $("#pubResult").scrollIntoView({ behavior: "smooth", block: "center" });
+      };
+      row.append(meta, sp, cp, qr, op);
       box.appendChild(row);
     }
   }catch(e){
@@ -316,3 +329,14 @@ $("#btnCopyLink").addEventListener("click", async ()=>{
   setTimeout(()=> b.textContent = "复制链接", 1500);
 });
 $("#btnLoadHw").addEventListener("click", loadAssignments);
+$("#btnQrDownload").addEventListener("click", ()=>{
+  $("#qrCanvas").toBlob((blob)=>{
+    if(!blob) return;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = (qrTitle || "朗读作业").replace(/[\\/:*?"<>|]/g, " ") + "-二维码.png";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=> URL.revokeObjectURL(a.href), 5000);
+  }, "image/png");
+});
+$("#btnQrPrint").addEventListener("click", ()=> printQr($("#qrCanvas"), qrTitle, $("#pubLink").value));
