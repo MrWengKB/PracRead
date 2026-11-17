@@ -33,7 +33,7 @@ async function sheetCall(url, payload){
       redirect: "follow"
     });
   }catch(e){
-    const err = new Error("连不上成绩表服务。最常见的原因是部署时「谁可以访问」没有选「任何人」。请点下面的测试链接看看显示什么。");
+    const err = new Error("连不上成绩表服务。最常见的原因是部署时「谁可以访问」选成了「只有我自己」或「任何拥有 Google 账号的用户」，必须选「任何人」。请点下面的测试链接看看显示什么。");
     err.testUrl = url + "?action=ping";
     throw err;
   }

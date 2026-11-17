@@ -107,7 +107,7 @@ async function saveSheetSettings(){
     link.href = testUrl; link.target = "_blank"; link.rel = "noopener";
     link.textContent = "打开测试链接";
     link.style.color = "var(--accent)";
-    p.append(link, "：正常会显示 {\"ok\":true,\"service\":\"pracread-sheet\",…}。如果要你登录 Google、显示“无法打开文件 / 找不到网页”，或显示 Script function not found: doGet，请按设置说明检查部署。");
+    p.append(link, "（请用无痕/隐身窗口打开，模拟没有登录 Google 的学生）：正常会显示 {\"ok\":true,\"service\":\"pracread-sheet\",…}。如果要你登录 Google、显示“无法打开文件 / 找不到网页”，或显示 Script function not found: doGet，请按设置说明检查部署。");
     $("#sheetMsg").appendChild(p);
   }
 }
