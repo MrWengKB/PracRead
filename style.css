@@ -321,3 +321,4 @@ textarea.short{ min-height: 140px; }
 .hw-item .name{ font-weight: 600; }
 .qrwrap{ margin-top: 14px; display:flex; flex-direction:column; align-items:flex-start; gap:10px; }
 .qr{ width: 240px; max-width: 100%; height: auto; border-radius: 10px; image-rendering: pixelated; }
+a.btn{ text-decoration:none; font-size:13.33px; font-family:inherit; display:inline-block; line-height:normal; }
