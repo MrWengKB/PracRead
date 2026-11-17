@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>朗读作业</title>
+
+  <!-- pinyin-pro CDN -->
+  <script src="https://unpkg.com/pinyin-pro@3.26.0/dist/index.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+  <div class="app">
+
+    <div class="topbar">
+      <div>
+        <div class="title" id="hwTitle">朗读作业</div>
+        <div class="hint" id="hwClass"></div>
+      </div>
+    </div>
+
+    <section id="viewLoading" class="card">
+      <div class="card-bd"><div class="status" id="loadMsg">正在加载作业…</div></div>
+    </section>
+
+    <section id="viewName" class="card hidden" style="margin-bottom:14px;">
+      <div class="card-bd">
+        <div class="row">
+          <label for="studentName" style="font-weight:600;">我的名字</label>
+          <select id="studentName" class="select">
+            <option value="">— 请选择 —</option>
+          </select>
+          <div class="spacer"></div>
+          <div class="hint" id="nameHint">先选好名字再开始录音，成绩会记在你的名下。</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="viewPractice" class="card hidden">
+      <div class="card-hd">
+        <div class="row" style="width:100%;">
+          <div>朗读文本</div>
+          <div class="spacer"></div>
+          <div class="toggle" title="在每个汉字上方显示拼音">
+            <span>显示拼音</span>
+            <div id="togglePinyin" class="switch" role="switch" aria-checked="false">
+              <div class="knob"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-bd">
+        <div id="display" class="display"></div>
+
+        <div class="recbox">
+          <div class="row">
+            <button id="btnRec" class="btn ok">开始录音</button>
+            <button id="btnStop" class="btn danger" disabled>停止</button>
+            <button id="btnSave" class="btn" disabled>保存</button>
+            <button id="btnAzure" class="btn primary hidden" disabled title="再评一次分">发音评分</button>
+            <div class="spacer"></div>
+            <div class="hint" id="formatHint"></div>
+          </div>
+
+          <div class="meter" aria-hidden="true">
+            <div id="bar" class="bar"></div>
+          </div>
+
+          <div class="status" id="status">状态：未录音</div>
+          <div class="hint" id="scoreHint">停止录音后会自动评分。</div>
+          <div class="submit-msg hidden" id="submitMsg"></div>
+        </div>
+
+        <div id="azureBox" class="scorebox hidden">
+          <div class="score-title">发音评分</div>
+          <div class="score-summary" id="azureSummary"></div>
+          <div class="score-chars" id="azureWords"></div>
+          <div class="hint">字上方是该词的发音准确度（0–100）；把鼠标停在字上可看每个音节的分数。</div>
+        </div>
+
+        <div id="scoreBox" class="scorebox hidden">
+          <div class="score-title" id="scoreTitle">逐字对照</div>
+          <div class="score-summary" id="scoreSummary"></div>
+          <div class="score-legend">
+            <span class="sc ok">读对</span><span class="sc tone">声调可疑</span><span class="sc wrong">读错</span><span class="sc missing">漏读</span>
+          </div>
+          <div class="score-chars" id="scoreChars"></div>
+          <div class="hint">识别到的文字：<span id="scoreHeard"></span></div>
+        </div>
+
+        <div style="margin-top:12px;" class="hint">最近保存的音频（只存在这台设备上，最多4条）。</div>
+        <div id="audioList" class="list"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script src="js/db.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/pinyin.js"></script>
+  <script src="js/audio-list.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/sheet-api.js"></script>
+  <script src="js/assignment-link.js"></script>
+  <script src="js/score.js"></script>
+  <script src="js/score-ui.js"></script>
+  <script src="js/azure.js"></script>
+  <script src="js/recorder.js"></script>
+  <script src="js/practice.js"></script>
+</body>
+</html>

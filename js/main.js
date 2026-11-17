@@ -1,18 +1,16 @@
 // ---------- View switching ----------
-function showView(name){
-  const v1 = $("#viewInput");
-  const v2 = $("#viewPractice");
-  const back = $("#btnBack");
+const VIEWS = { input: "#viewInput", practice: "#viewPractice", settings: "#viewSettings", publish: "#viewPublish" };
+let currentView = "input";
 
-  if(name === "input"){
-    v1.classList.remove("hidden");
-    v2.classList.add("hidden");
-    back.classList.add("hidden");
-  }else{
-    v1.classList.add("hidden");
-    v2.classList.remove("hidden");
-    back.classList.remove("hidden");
+function showView(name){
+  currentView = name;
+  for(const [k, sel] of Object.entries(VIEWS)){
+    const el = $(sel);
+    if(el) el.classList.toggle("hidden", k !== name);
   }
+  $("#btnBack").classList.toggle("hidden", name === "input");
+  const st = $("#btnSettings");
+  if(st) st.classList.toggle("hidden", name === "settings");
 }
 
 // ---------- Events ----------
@@ -31,6 +29,7 @@ $("#btnGenerate").addEventListener("click", async ()=>{
 });
 
 $("#btnBack").addEventListener("click", ()=>{
+  if(currentView !== "practice"){ showView("input"); return; }
   // stop recording if active
   try{
     if(mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();

@@ -62,7 +62,9 @@ async function azureAssess(blob, referenceText){
     const t = await resp.text().catch(()=> "");
     throw new Error(`评分服务出错（${resp.status}）${t ? "：" + t.slice(0, 200) : ""}`);
   }
-  return resp.json();
+  const data = await resp.json();
+  data._seconds = seconds;
+  return data;
 }
 
 async function runAzureScore(){
@@ -75,7 +77,9 @@ async function runAzureScore(){
   try{
     const ref = currentText.replace(/\s+/g, " ").trim();
     const result = await azureAssess(lastBlob, ref);
-    renderAzureScore(result);
+    const summary = renderAzureScore(result);
+    // 学生页（practice.js）会定义 onAzureScored，把成绩写入 Google Sheet
+    if(summary && typeof onAzureScored === "function") onAzureScored(summary);
   }catch(e){
     $("#azureSummary").textContent = "发音评分失败：" + (e && e.message ? e.message : e);
   }finally{

@@ -63,11 +63,12 @@ function renderAzureScore(result){
   const best = result && result.NBest && result.NBest[0];
   if(!best){
     $("#azureSummary").textContent = "Azure 没有返回评分结果" + (result && result.RecognitionStatus ? `（${result.RecognitionStatus}）` : "") + "。";
-    return;
+    return null;
   }
   const pa = best.PronunciationAssessment || best;
   // 用 Azure 的识别文字做逐字对照
-  renderCharScore(currentText, best.Display || best.Lexical || "");
+  const heard = best.Display || best.Lexical || "";
+  const cs = renderCharScore(currentText, heard);
   const fmt = (v)=> v == null ? "-" : Math.round(v);
   $("#azureSummary").textContent =
     `发音总分 ${fmt(pa.PronScore)} · 准确度 ${fmt(pa.AccuracyScore)} · 流利度 ${fmt(pa.FluencyScore)} · 完整度 ${fmt(pa.CompletenessScore)}`;
@@ -96,4 +97,9 @@ function renderAzureScore(result){
     el.title = `准确度 ${fmt(acc)}` + (type !== "None" ? `（${type}）` : "") + (parts.length ? `\n${parts.join("  ")}` : "");
     wrap.appendChild(el);
   }
+  return {
+    pron: pa.PronScore, accuracy: pa.AccuracyScore, fluency: pa.FluencyScore, completeness: pa.CompletenessScore,
+    ok: cs ? cs.ok : null, tone: cs ? cs.tone : null, wrong: cs ? cs.wrong : null, missing: cs ? cs.missing : null,
+    seconds: result._seconds, heard
+  };
 }

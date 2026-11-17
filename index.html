@@ -18,6 +18,7 @@
       <div class="title">朗读练习</div>
       <div class="navbtns">
         <button id="btnBack" class="btn hidden">返回输入</button>
+        <button id="btnSettings" class="btn">设置</button>
       </div>
     </div>
 
@@ -31,6 +32,7 @@
         <textarea id="inputText" placeholder="在这里粘贴或输入要朗读的文字（支持换行）。"></textarea>
         <div class="row" style="margin-top:12px;">
           <button id="btnGenerate" class="btn primary">生成</button>
+          <button id="btnPublish" class="btn ok" title="把这段文字发布成作业，生成链接发给学生">发布作业</button>
           <div class="spacer"></div>
           <div class="hint">提示：拼音会按“逐字”展示，主要适合普通话朗读训练；多音字会按库的默认读音推断。</div>
         </div>
@@ -100,6 +102,109 @@
       </div>
     </section>
 
+    <!-- 发布作业 -->
+    <section id="viewPublish" class="card hidden">
+      <div class="card-hd">
+        <div>发布作业</div>
+        <div class="hint">学生打开链接只能朗读，看不到输入文本的地方。</div>
+      </div>
+      <div class="card-bd">
+        <div class="field">
+          <label for="pubTitle">作业标题</label>
+          <input id="pubTitle" class="input" maxlength="100" placeholder="例如：第三课 课文朗读" />
+        </div>
+        <div class="field" id="pubClassField">
+          <label for="pubClass">班级（学生从这个班的名单里选名字）</label>
+          <div class="row">
+            <select id="pubClass" class="select"></select>
+            <div class="hint" id="pubClassHint"></div>
+          </div>
+        </div>
+        <div class="field">
+          <label>篇章</label>
+          <div class="hint" id="pubPreview"></div>
+        </div>
+        <div class="row">
+          <button id="btnDoPublish" class="btn primary">生成作业链接</button>
+          <button id="btnOfflineLink" class="btn" title="链接里直接包含篇章，不需要成绩表；学生不选名字，成绩不记录">生成不记成绩的链接</button>
+        </div>
+        <div class="msg" id="pubMsg"></div>
+
+        <div id="pubResult" class="hidden" style="margin-top:14px;">
+          <div class="field">
+            <label for="pubLink">把这个链接发给学生</label>
+            <input id="pubLink" class="input linkbox" readonly />
+          </div>
+          <div class="row">
+            <button id="btnCopyLink" class="btn ok">复制链接</button>
+            <a id="btnOpenLink" class="btn" target="_blank" rel="noopener">打开看看</a>
+          </div>
+        </div>
+
+        <hr class="sep" />
+        <div class="row">
+          <div class="section-title">已发布的作业</div>
+          <div class="spacer"></div>
+          <button id="btnLoadHw" class="btn">刷新</button>
+        </div>
+        <div class="hint">要停止收成绩：在 Google Sheet 的「作业」分页，把那一行的「状态」改成 关闭。</div>
+        <div id="hwList"></div>
+      </div>
+    </section>
+
+    <!-- 设置 -->
+    <section id="viewSettings" class="card hidden">
+      <div class="card-hd">
+        <div>设置</div>
+        <div class="hint">这些设置只保存在这台电脑的浏览器里。</div>
+      </div>
+      <div class="card-bd">
+        <div class="section-title">1. 成绩表（Google Sheet）</div>
+        <div class="field">
+          <label for="setSheetUrl">Apps Script 网页应用网址</label>
+          <input id="setSheetUrl" class="input" placeholder="https://script.google.com/macros/s/……/exec" />
+        </div>
+        <div class="field">
+          <label for="setKey">老师密码（和 Apps Script 里的 TEACHER_KEY 一样）</label>
+          <input id="setKey" class="input" type="password" autocomplete="off" />
+        </div>
+        <div class="row">
+          <button id="btnSaveSheet" class="btn primary">保存并测试连接</button>
+        </div>
+        <div class="msg" id="sheetMsg"></div>
+
+        <hr class="sep" />
+        <div class="section-title">2. 学生名单</div>
+        <div class="field">
+          <label for="rosterClass">班级名称</label>
+          <input id="rosterClass" class="input" maxlength="50" placeholder="例如：P5 Excellence" />
+        </div>
+        <div class="field">
+          <label for="rosterText">学生名字（每行一个；也可以直接从 Excel 复制粘贴，或选择 CSV 文件）</label>
+          <textarea id="rosterText" class="short" placeholder="陈小明&#10;Tan Wei Ling&#10;……"></textarea>
+          <div class="row">
+            <input id="rosterFile" type="file" accept=".csv,.txt,text/csv,text/plain" />
+          </div>
+          <div class="hint" id="rosterPreview">如果表格第一行有「姓名 / Name」和「班级 / Class」栏，会自动按栏读取，并可一次导入多个班。</div>
+        </div>
+        <div class="row">
+          <button id="btnSaveRoster" class="btn primary">导入 / 更新名单</button>
+          <div class="hint">同一个班级再次导入会整班替换。</div>
+        </div>
+        <div class="msg" id="rosterMsg"></div>
+
+        <div style="margin-top:14px;">
+          <div class="row">
+            <div class="section-title">已导入的班级</div>
+            <div class="spacer"></div>
+            <button id="btnLoadClasses" class="btn">刷新</button>
+          </div>
+          <div class="hint" style="margin-bottom:8px;">点击班级可以把名单载入上面修改。</div>
+          <div id="classList" class="chips"></div>
+        </div>
+      </div>
+    </section>
+
   </div>
 
   <script src="js/utils.js"></script>
@@ -108,11 +213,14 @@
   <script src="js/pinyin.js"></script>
   <script src="js/audio-list.js"></script>
   <script src="js/config.js"></script>
+  <script src="js/sheet-api.js"></script>
+  <script src="js/assignment-link.js"></script>
   <script src="js/score.js"></script>
   <script src="js/score-ui.js"></script>
   <script src="js/azure.js"></script>
   <script src="js/recorder.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/admin.js"></script>
 </body>
 </html>
 
