@@ -340,3 +340,29 @@ $("#btnQrDownload").addEventListener("click", ()=>{
   }, "image/png");
 });
 $("#btnQrPrint").addEventListener("click", ()=> printQr($("#qrCanvas"), qrTitle, $("#pubLink").value));
+
+// ---------- 如何获取 Apps Script 网址 ----------
+let gsCode = "";
+async function openHowTo(){
+  const dlg = $("#howToDlg");
+  if(dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+  if(gsCode) return;
+  try{
+    // 从网站上的 apps-script/Code.gs 读取，和仓库里的版本保持一致
+    const resp = await fetch("apps-script/Code.gs", { cache: "no-cache" });
+    if(!resp.ok) throw new Error(resp.status);
+    gsCode = await resp.text();
+    $("#gsCode").textContent = gsCode;
+    $("#btnCopyGs").disabled = false;
+  }catch(e){
+    $("#gsCode").textContent = "代码加载失败，请到 GitHub 仓库的 apps-script/Code.gs 复制。";
+  }
+}
+$("#btnHowTo").addEventListener("click", openHowTo);
+$("#btnHowToClose").addEventListener("click", ()=> $("#howToDlg").close());
+$("#howToDlg").addEventListener("click", (e)=>{ if(e.target === e.currentTarget) e.currentTarget.close(); });
+$("#btnCopyGs").addEventListener("click", async ()=>{
+  const b = $("#btnCopyGs");
+  b.textContent = (await copyText(gsCode)) ? "已复制 ✓" : "复制失败，请手动全选复制";
+  setTimeout(()=> b.textContent = "复制代码", 2000);
+});

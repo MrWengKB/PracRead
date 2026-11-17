@@ -169,7 +169,10 @@
       <div class="card-bd">
         <div class="section-title">1. 成绩表（Google Sheet）</div>
         <div class="field">
-          <label for="setSheetUrl">Apps Script 网页应用网址</label>
+          <div class="row">
+            <label for="setSheetUrl">Apps Script 网页应用网址</label>
+            <button id="btnHowTo" class="btn small" type="button">如何获取</button>
+          </div>
           <input id="setSheetUrl" class="input" placeholder="https://script.google.com/macros/s/……/exec" />
         </div>
         <div class="field">
@@ -214,6 +217,34 @@
     </section>
 
   </div>
+
+  <!-- 如何获取 Apps Script 网址 -->
+  <dialog id="howToDlg" class="dlg">
+    <div class="dlg-hd">
+      <div>如何获取 Apps Script 网页应用网址</div>
+      <button id="btnHowToClose" class="btn small" type="button" aria-label="关闭">✕</button>
+    </div>
+    <div class="dlg-bd">
+      <ol class="steps">
+        <li>打开 <a href="https://sheets.google.com" target="_blank" rel="noopener">Google Sheets</a>，新建一个空白表格（例如取名「朗读成绩」）。建议用个人 Gmail，学校账号可能不允许第 6 步的「任何人」。</li>
+        <li>点菜单 <b>扩展程序 → Apps Script</b>。</li>
+        <li>把编辑器里原有的代码全部删掉，点下面的 <b>复制代码</b>，粘贴进去。</li>
+        <li>在代码开头找到 <code>const TEACHER_KEY = "改成你自己的密码";</code> 引号里的字改成你自己的密码（至少 4 个字符），然后按 💾 保存。</li>
+        <li>点右上角 <b>部署 → 新建部署</b>，点齿轮图标选 <b>网页应用</b>。</li>
+        <li>执行身份选 <b>我</b>；谁可以访问选 <b>任何人</b>。<br><span class="warn">⚠ 不要选「任何拥有 Google 账号的用户」，否则会连接失败。</span></li>
+        <li>点「部署」。第一次要授权：选你的账号 → <b>高级</b> → <b>转至……（不安全）</b> → <b>允许</b>。这是你自己的脚本，Google 对所有未审核的脚本都会这样提示。</li>
+        <li>复制「网页应用」网址（以 <code>/exec</code> 结尾），贴到设置里的网址栏，填上同一个密码，点 <b>保存并测试连接</b>。</li>
+      </ol>
+      <div class="hint">以后修改了代码，要点 <b>部署 → 管理部署 → ✏️ 编辑 → 版本：新版本 → 部署</b>，网址不变。</div>
+
+      <div class="row" style="margin-top:14px;">
+        <div class="section-title" style="margin:0;">Apps Script 代码（Code.gs）</div>
+        <div class="spacer"></div>
+        <button id="btnCopyGs" class="btn ok" type="button" disabled>复制代码</button>
+      </div>
+      <pre id="gsCode" class="code">正在加载代码…</pre>
+    </div>
+  </dialog>
 
   <script src="js/utils.js"></script>
   <script src="js/db.js"></script>
