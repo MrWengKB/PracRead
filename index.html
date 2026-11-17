@@ -43,6 +43,12 @@
         <div class="row" style="width:100%;">
           <div>朗读文本</div>
           <div class="spacer"></div>
+          <div class="toggle" title="录音时同时用浏览器语音识别，停止后逐字评分">
+            <span>自动评分</span>
+            <div id="toggleScore" class="switch on" role="switch" aria-checked="true">
+              <div class="knob"></div>
+            </div>
+          </div>
           <div class="toggle" title="在每个汉字上方显示拼音">
             <span>显示拼音</span>
             <div id="togglePinyin" class="switch" role="switch" aria-checked="false">
@@ -59,6 +65,7 @@
             <button id="btnRec" class="btn ok">开始录音</button>
             <button id="btnStop" class="btn danger" disabled>停止</button>
             <button id="btnSave" class="btn" disabled>保存</button>
+            <button id="btnAzure" class="btn primary hidden" disabled title="用 Azure 评估声调和发音（需联网）">发音评分</button>
             <div class="spacer"></div>
             <div class="hint" id="formatHint"></div>
           </div>
@@ -68,6 +75,25 @@
           </div>
 
           <div class="status" id="status">状态：未录音</div>
+          <div class="hint" id="scoreHint"></div>
+        </div>
+
+        <div id="scoreBox" class="scorebox hidden">
+          <div class="score-title">朗读评分（浏览器识别）</div>
+          <div class="score-summary" id="scoreSummary"></div>
+          <div class="score-legend">
+            <span class="sc ok">读对</span><span class="sc tone">声调可疑</span><span class="sc wrong">读错</span><span class="sc missing">漏读</span>
+          </div>
+          <div class="score-chars" id="scoreChars"></div>
+          <div class="hint">识别到的文字：<span id="scoreHeard"></span></div>
+          <div class="hint">提示：浏览器识别会自动“纠正”部分发音，适合检查漏读和错字；声调请以“发音评分”为准。</div>
+        </div>
+
+        <div id="azureBox" class="scorebox hidden">
+          <div class="score-title">发音评分（Azure）</div>
+          <div class="score-summary" id="azureSummary"></div>
+          <div class="score-chars" id="azureWords"></div>
+          <div class="hint">字上方是该词的发音准确度（0–100）；把鼠标停在字上可看每个音节的分数。</div>
         </div>
 
         <div style="margin-top:12px;" class="hint">最近保存的音频（最多保留4条，超出会自动删除最旧的）。</div>
@@ -82,6 +108,11 @@
   <script src="js/state.js"></script>
   <script src="js/pinyin.js"></script>
   <script src="js/audio-list.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/score.js"></script>
+  <script src="js/speech.js"></script>
+  <script src="js/score-ui.js"></script>
+  <script src="js/azure.js"></script>
   <script src="js/recorder.js"></script>
   <script src="js/main.js"></script>
 </body>

@@ -26,6 +26,7 @@ $("#btnGenerate").addEventListener("click", async ()=>{
   currentText = cleaned;
   showView("practice");
   renderTextWithPinyin(currentText, showPinyin);
+  clearScore();
   await refreshAudioList();
 });
 
@@ -39,6 +40,10 @@ $("#btnBack").addEventListener("click", ()=>{
   }catch(e){}
   mediaStream = null;
   mediaRecorder = null;
+  abortSpeech();
+  scoringThisTake = false;
+  lastBlob = null;
+  clearScore();
   stopMeter();
   setButtons({rec:true, stop:false, save:false});
   setStatus("状态：未录音");
@@ -58,10 +63,14 @@ $("#togglePinyin").addEventListener("click", ()=>{
 $("#btnRec").addEventListener("click", startRecording);
 $("#btnStop").addEventListener("click", stopRecording);
 $("#btnSave").addEventListener("click", saveRecording);
+$("#btnAzure").addEventListener("click", runAzureScore);
+$("#toggleScore").addEventListener("click", ()=> setAutoScore(!autoScore));
 
 // Show supported format hint
 $("#formatHint").textContent = MIME ? `优先编码：${MIME}` : "编码：由浏览器自动选择";
 
 // initial state
+setAutoScore(autoScore);
+if(!speechSupported()) $("#scoreHint").textContent = "当前浏览器不支持语音识别（如 Firefox），无法自动评分。请使用 Chrome、Edge 或 Safari。";
 showView("input");
 setButtons({rec:true, stop:false, save:false});

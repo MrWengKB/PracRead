@@ -1,0 +1,9 @@
+name = "pracread-azure"
+main = "azure-proxy.js"
+compatibility_date = "2025-01-01"
+
+[vars]
+AZURE_SPEECH_REGION = "southeastasia"
+# 改成你网页的地址（GitHub Pages 一般是 https://<用户名>.github.io）
+ALLOWED_ORIGIN = "https://mrwengkb.github.io"
+# 密钥不要写在这里，用：npx wrangler secret put AZURE_SPEECH_KEY

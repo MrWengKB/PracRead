@@ -7,6 +7,10 @@ function setButtons({rec, stop, save}){
   $("#btnRec").disabled = !rec;
   $("#btnStop").disabled = !stop;
   $("#btnSave").disabled = !save;
+  // Azure 发音评分：有刚录好的音频且已配置代理时可用
+  const az = $("#btnAzure");
+  az.classList.toggle("hidden", !azureEnabled());
+  az.disabled = !(save && lastBlob);
 }
 
 function startMeter(){
@@ -76,10 +80,29 @@ async function startRecording(){
   };
 
   mediaRecorder.start();
+
+  // 同时启动语音识别，用于停止后自动评分
+  clearScore();
+  scoringThisTake = false;
+  if(autoScore){
+    if(speechSupported()){
+      scoringThisTake = startSpeech(showLiveHeard);
+      if(!scoringThisTake) setStatus(`状态：录音中…（语音识别启动失败，本次不评分）\n编码：${mediaRecorder.mimeType || MIME || "browser-default"}`);
+    }else{
+      setStatus(`状态：录音中…（当前浏览器不支持语音识别，无法自动评分）\n编码：${mediaRecorder.mimeType || MIME || "browser-default"}`);
+    }
+  }
 }
+
+let scoringThisTake = false;
 
 async function stopRecording(){
   if(!mediaRecorder) return;
+  if(scoringThisTake){
+    scoringThisTake = false;
+    $("#scoreSummary").textContent = "评分中…";
+    stopSpeech().then((heard)=> renderBrowserScore(currentText, heard));
+  }
   try{
     mediaRecorder.stop();
   }catch(e){}
