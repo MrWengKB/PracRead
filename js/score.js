@@ -1,4 +1,4 @@
-// 中文朗读自动评分原型：浏览器语音识别 (Web Speech API, zh-CN) + 拼音对齐
+// 逐字对照：把识别出的文字按拼音与原文对齐，标出读对 / 声调可疑 / 读错 / 漏读
 // 纯函数部分（alignAndScore）不依赖浏览器，可在 Node 里测试。
 (function (root) {
   const isZh = (ch) => /[㐀-鿿豈-﫿]/.test(ch);

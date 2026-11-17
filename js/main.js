@@ -40,8 +40,7 @@ $("#btnBack").addEventListener("click", ()=>{
   }catch(e){}
   mediaStream = null;
   mediaRecorder = null;
-  abortSpeech();
-  scoringThisTake = "";
+  scoringThisTake = false;
   lastBlob = null;
   clearScore();
   stopMeter();
@@ -71,6 +70,6 @@ $("#formatHint").textContent = MIME ? `优先编码：${MIME}` : "编码：由�
 
 // initial state
 setAutoScore(autoScore);
-if(!speechSupported()) $("#scoreHint").textContent = "当前浏览器不支持语音识别（如 Firefox），无法自动评分。请使用 Chrome、Edge 或 Safari。";
+if(!azureEnabled()) $("#scoreHint").textContent = "未配置评分服务（js/config.js 中的 AZURE_PROXY_URL），无法自动评分。";
 showView("input");
 setButtons({rec:true, stop:false, save:false});

@@ -81,33 +81,15 @@ async function startRecording(){
 
   mediaRecorder.start();
 
-  // 自动评分：
-  // - 一般浏览器：录音时同时用浏览器语音识别
-  // - 安卓 Chrome：麦克风不能同时给录音和识别用，改为停止后用 Azure 评分（已配置时）
+  // 停止后自动用 Azure 评分
   clearScore();
-  scoringThisTake = "";
-  const enc = `编码：${mediaRecorder.mimeType || MIME || "browser-default"}`;
-  if(autoScore){
-    if(IS_ANDROID && azureEnabled()){
-      scoringThisTake = "azure";
-    }else if(IS_ANDROID){
-      setStatus(`状态：录音中…（安卓浏览器无法边录音边识别，本次不自动评分）\n${enc}`);
-    }else if(speechSupported()){
-      scoringThisTake = startSpeech(showLiveHeard) ? "web" : "";
-      if(!scoringThisTake){
-        if(azureEnabled()) scoringThisTake = "azure";
-        else setStatus(`状态：录音中…（语音识别启动失败，本次不评分）\n${enc}`);
-      }
-    }else if(azureEnabled()){
-      scoringThisTake = "azure";
-    }else{
-      setStatus(`状态：录音中…（当前浏览器不支持语音识别，无法自动评分）\n${enc}`);
-    }
+  scoringThisTake = autoScore && azureEnabled();
+  if(autoScore && !azureEnabled()){
+    setStatus(`状态：录音中…（未配置评分服务，本次不评分）\n编码：${mediaRecorder.mimeType || MIME || "browser-default"}`);
   }
 }
 
-let scoringThisTake = "";   // "" | "web" | "azure"
-const IS_ANDROID = /Android/i.test(navigator.userAgent);
+let scoringThisTake = false;
 
 // 等 MediaRecorder 的 onstop 把 lastBlob 准备好
 function waitForBlob(timeoutMs = 4000){
@@ -123,20 +105,8 @@ function waitForBlob(timeoutMs = 4000){
 
 async function stopRecording(){
   if(!mediaRecorder) return;
-  const mode = scoringThisTake;
-  scoringThisTake = "";
-  if(mode === "web"){
-    $("#scoreSummary").textContent = "评分中…";
-    stopSpeech().then(async (heard)=>{
-      if(heard || !azureEnabled()){
-        renderBrowserScore(currentText, heard);
-        return;
-      }
-      // 浏览器没识别到 -> 自动改用 Azure
-      if(await waitForBlob()) runAzureScore();
-      else renderBrowserScore(currentText, heard);
-    });
-  }else if(mode === "azure"){
+  if(scoringThisTake){
+    scoringThisTake = false;
     waitForBlob().then((b)=>{ if(b) runAzureScore(); });
   }
   try{
