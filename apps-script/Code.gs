@@ -3,11 +3,12 @@
 //       改好下面的 TEACHER_KEY，然后「部署 → 新建部署 → 网页应用」，
 //       执行身份选「我」，谁可以访问选「任何人」。详细步骤见 README。
 //
-// 表格里会自动建立四个分页：
-//   作业   每次发布作业一行（可以把「状态」改成“关闭”来停止收成绩）
-//   名单   班级 + 姓名
-//   成绩   学生每评分一次记一行
-//   汇总   按作业和学生统计次数、最高分、平均分（自动公式）
+// 表格里会自动建立这些分页：
+//   作业        每次发布作业一行（可以把「状态」改成“关闭”来停止收成绩）
+//   名单        班级 + 姓名
+//   成绩        所有学生每评分一次记一行（总记录，带班级和作业）
+//   汇总        按班级、作业、学生统计次数、最高分、平均分（自动公式）
+//   班级·作业名  每发布一份作业自动建一个分页，只列该班学生，显示每人的次数、最高分、平均分、最近练习
 
 // ★ 改成只有你知道的密码。老师页面「设置」里要填同一个密码，才能导入名单、发布作业。
 const TEACHER_KEY = "改成你自己的密码";
@@ -15,7 +16,7 @@ const TEACHER_KEY = "改成你自己的密码";
 const VERSION = 1;
 const SH = { assign: "作业", roster: "名单", scores: "成绩", summary: "汇总" };
 const HEADERS = {
-  [SH.assign]: ["作业ID", "发布时间", "标题", "班级", "篇章", "状态"],
+  [SH.assign]: ["作业ID", "发布时间", "标题", "班级", "篇章", "状态", "分页"],
   [SH.roster]: ["班级", "姓名"],
   [SH.scores]: ["时间", "作业ID", "作业标题", "班级", "姓名", "发音总分", "准确度", "流利度", "完整度",
                 "读对", "声调可疑", "读错", "漏读", "录音秒数", "识别文字"]
@@ -96,6 +97,7 @@ function ensureSummary_() {
     "=QUERY('" + SH.scores + "'!A:O," +
     "\"select B, C, D, E, count(F), max(F), avg(F), max(A) where E is not null group by B, C, D, E " +
     "label B '作业ID', C '作业', D '班级', E '姓名', count(F) '次数', max(F) '最高分', avg(F) '平均分', max(A) '最近练习' " +
+    "order by D, C, E " +
     "format avg(F) '0', max(A) 'yyyy-mm-dd hh:mm'\",1)"
   );
 }
@@ -211,6 +213,7 @@ function saveRoster_(req) {
     const all = keep.map(r => [r[0], r[1]]).concat(names.map(n => [safe_(className), safe_(n)]));
     if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, 2).clearContent();
     if (all.length) sh.getRange(2, 1, all.length, 2).setValues(all);
+    syncClassTabs_(className, names);
   } finally {
     lock.releaseLock();
   }
@@ -225,20 +228,78 @@ function publish_(req) {
   if (text.length > 3000) throw new Error("篇章太长（最多 3000 字）。");
   if (!className || !namesOf_(className).length) throw new Error("请先导入这个班级的名单。");
 
-  const id = Utilities.getUuid().replace(/-/g, "").slice(0, 12);
+  // 以字母开头，避免表格把纯数字 ID 当成数字
+  const id = "h" + Utilities.getUuid().replace(/-/g, "").slice(0, 11);
+  let tab = "";
   const lock = LockService.getScriptLock();
   lock.waitLock(20000);
   try {
-    sheet_(SH.assign).appendRow([id, new Date(), safe_(title), safe_(className), safe_(text), "开放"]);
+    sheet_(SH.scores); // 确保「成绩」分页存在，作业分页的公式要用
+    tab = makeAssignTab_(id, title, className, namesOf_(className));
+    sheet_(SH.assign).appendRow([id, new Date(), safe_(title), safe_(className), safe_(text), "开放", tab]);
   } finally {
     lock.releaseLock();
   }
-  return { ok: true, id };
+  return { ok: true, id, tab };
+}
+
+// ---------- 每份作业一个分页 ----------
+const TAB_FIRST_ROW = 6; // 第 5 行是表头，第 6 行起是学生
+
+function tabName_(className, title, id) {
+  const ss = SpreadsheetApp.getActive();
+  let base = (className + "·" + title).replace(/[\[\]*?\/\\:']/g, " ").replace(/\s+/g, " ").trim().slice(0, 80) || id;
+  let name = base;
+  if (ss.getSheetByName(name) || Object.values(SH).includes(name)) name = base + " (" + id.slice(1, 5) + ")";
+  return name;
+}
+
+function studentRow_(r) {
+  const S = "'" + SH.scores + "'!";
+  const cond = S + "$B:$B,$B$1," + S + "$E:$E,$A" + r;
+  return [
+    "=COUNTIFS(" + cond + ")",
+    "=IF(B" + r + "=0,\"\",MAXIFS(" + S + "$F:$F," + cond + "))",
+    "=IF(B" + r + "=0,\"\",ROUND(AVERAGEIFS(" + S + "$F:$F," + cond + "),0))",
+    "=IF(B" + r + "=0,\"\",MAXIFS(" + S + "$A:$A," + cond + "))"
+  ];
+}
+
+function appendStudents_(sh, names) {
+  if (!names.length) return;
+  const start = Math.max(sh.getLastRow() + 1, TAB_FIRST_ROW);
+  const rows = names.map((n, i) => [safe_(n)].concat(studentRow_(start + i)));
+  sh.getRange(start, 1, rows.length, 5).setValues(rows);
+  sh.getRange(start, 5, rows.length, 1).setNumberFormat("yyyy-mm-dd hh:mm");
+}
+
+function makeAssignTab_(id, title, className, names) {
+  const name = tabName_(className, title, id);
+  const sh = SpreadsheetApp.getActive().insertSheet(name);
+  sh.getRange(1, 1, 3, 2).setValues([["作业ID", id], ["班级", safe_(className)], ["标题", safe_(title)]]);
+  sh.getRange(5, 1, 1, 5).setValues([["姓名", "练习次数", "最高分", "平均分", "最近练习"]]);
+  sh.getRange(5, 1, 1, 5).setFontWeight("bold");
+  sh.setFrozenRows(5);
+  appendStudents_(sh, names);
+  return name;
+}
+
+// 名单更新后，把新加入的学生补进这个班已发布的作业分页
+function syncClassTabs_(className, names) {
+  const ss = SpreadsheetApp.getActive();
+  for (const r of rows_(SH.assign)) {
+    if (String(r[3]).trim() !== className || !r[6]) continue;
+    const sh = ss.getSheetByName(String(r[6]));
+    if (!sh) continue;
+    const n = sh.getLastRow();
+    const have = n >= TAB_FIRST_ROW ? sh.getRange(TAB_FIRST_ROW, 1, n - TAB_FIRST_ROW + 1, 1).getValues().map(x => String(x[0]).trim()) : [];
+    appendStudents_(sh, names.filter(x => !have.includes(x)));
+  }
 }
 
 function listAssignments_() {
   const list = rows_(SH.assign).map(r => ({
-    id: String(r[0]), time: r[1] instanceof Date ? r[1].getTime() : String(r[1]),
+    id: String(r[0]), tab: String(r[6] || ""), time: r[1] instanceof Date ? r[1].getTime() : String(r[1]),
     title: String(r[2]), className: String(r[3]), open: String(r[5]).trim() !== "关闭",
     preview: String(r[4]).slice(0, 30)
   })).filter(x => x.id);

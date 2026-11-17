@@ -222,7 +222,7 @@ async function doPublish(){
     const d = await teacherCall({ action: "publish", title: $("#pubTitle").value.trim(), className, text: publishText });
     lsSet("pracread.lastClass", className);
     showLink(buildSheetLink(d.id, teacherSheetUrl()));
-    setMsg("#pubMsg", "✓ 已发布。学生的成绩会写进 Google Sheet 的「成绩」分页。", "ok");
+    setMsg("#pubMsg", "✓ 已发布。这份作业的成绩在 Google Sheet 的分页「" + (d.tab || className) + "」里（只列这个班的学生）。", "ok");
     loadAssignments();
   }catch(e){
     setMsg("#pubMsg", "发布失败：" + e.message, "err");
@@ -264,7 +264,7 @@ async function loadAssignments(){
       nm.textContent = a.title + (a.open ? "" : "（已关闭）");
       const sub = document.createElement("div");
       sub.className = "hint";
-      sub.textContent = `${a.className} · ${typeof a.time === "number" ? fmtTime(a.time) : a.time}`;
+      sub.textContent = `${a.className} · ${typeof a.time === "number" ? fmtTime(a.time) : a.time}` + (a.tab ? ` · 成绩分页「${a.tab}」` : "");
       meta.append(nm, sub);
       const sp = document.createElement("div"); sp.className = "spacer";
       const cp = document.createElement("button");
