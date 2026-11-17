@@ -1,0 +1,731 @@
+<!doctype html>
+<html lang="zh-Hans">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>朗读练习</title>
+
+  <!-- pinyin-pro CDN -->
+  <script src="https://unpkg.com/pinyin-pro@3.26.0/dist/index.js"></script>
+
+  <style>
+    :root{
+      --bg:#0b0c10;
+      --panel:#12141b;
+      --panel2:#161a23;
+      --text:#e9edf3;
+      --muted:#a7b0c0;
+      --border: rgba(255,255,255,.12);
+      --accent:#5ea3ff;
+      --danger:#ff5e7a;
+      --ok:#4ade80;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 14px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, "PingFang SC","Noto Sans SC","Microsoft YaHei", sans-serif;
+      background: radial-gradient(1200px 700px at 20% -10%, rgba(94,163,255,.20), transparent 60%),
+                  radial-gradient(900px 500px at 110% 10%, rgba(74,222,128,.14), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:stretch;
+      justify-content:center;
+    }
+    .app{
+      width:min(980px, 100%);
+      padding: 22px 14px 34px;
+      margin: 0 auto;
+    }
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+    .title{
+      font-size:20px;
+      font-weight:700;
+      letter-spacing:.5px;
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+      border:1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card-hd{
+      padding:14px 16px;
+      border-bottom:1px solid var(--border);
+      background: rgba(0,0,0,.18);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .card-bd{ padding:16px; }
+
+    .btn{
+      appearance:none;
+      border:1px solid var(--border);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      padding:10px 14px;
+      border-radius: 12px;
+      cursor:pointer;
+      transition: transform .06s ease, background .2s ease, border-color .2s ease;
+      user-select:none;
+      font-weight:600;
+    }
+    .btn:hover{ background: rgba(255,255,255,.10); border-color: rgba(255,255,255,.18); }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{ background: rgba(94,163,255,.18); border-color: rgba(94,163,255,.40); }
+    .btn.primary:hover{ background: rgba(94,163,255,.24); }
+    .btn.danger{ background: rgba(255,94,122,.14); border-color: rgba(255,94,122,.40); }
+    .btn.danger:hover{ background: rgba(255,94,122,.20); }
+    .btn.ok{ background: rgba(74,222,128,.12); border-color: rgba(74,222,128,.35); }
+    .btn.ok:hover{ background: rgba(74,222,128,.18); }
+
+    textarea{
+      width:100%;
+      min-height: 180px;
+      resize: vertical;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.22);
+      color: var(--text);
+      padding: 12px 12px;
+      line-height: 1.55;
+      outline:none;
+      font-size: 16px;
+    }
+    textarea::placeholder{ color: rgba(167,176,192,.7); }
+
+    .row{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .spacer{ flex:1; }
+
+    .hint{
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    /* Toggle */
+    .toggle{
+      display:flex; align-items:center; gap:10px;
+      color: var(--muted);
+      font-size: 13px;
+      user-select:none;
+    }
+    .switch{
+      width: 44px; height: 26px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.12);
+      border:1px solid var(--border);
+      position:relative;
+      cursor:pointer;
+      transition: background .2s ease, border-color .2s ease;
+      flex:0 0 auto;
+    }
+    .knob{
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      position:absolute;
+      top:2px; left:2px;
+      background: rgba(255,255,255,.85);
+      transition: left .2s ease, background .2s ease;
+    }
+    .switch.on{
+      background: rgba(94,163,255,.22);
+      border-color: rgba(94,163,255,.45);
+    }
+    .switch.on .knob{ left: 22px; background: rgba(255,255,255,.92); }
+
+    /* Text display with pinyin */
+    .display{
+        background: rgba(0,0,0,.22);
+        border:1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px 20px;
+        min-height: 240px;
+        line-height: 2.2;      
+        font-size: 54px;       
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+
+    .zh{
+        display:inline-flex;
+        flex-direction:column;
+        align-items:center;
+        justify-content:flex-end;
+        margin: 6px 4px;   
+        padding: 0 3px;
+        vertical-align: bottom;
+    }
+    .py{
+        font-size: 33px;     
+        line-height: 1.1;
+        color: rgba(167,176,192,.95);
+        font-family: var(--mono);
+        min-height: 36px;      
+        transform: translateY(4px);
+    }
+    .hz{
+      line-height: 1.35;
+      color: var(--text);
+    }
+    .py.hidden{ visibility:hidden; }
+
+    /* Recorder */
+    .recbox{
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.18);
+    }
+    .status{
+      font-family: var(--mono);
+      font-size: 12px;
+      color: rgba(167,176,192,.95);
+      margin-top: 8px;
+      white-space: pre-wrap;
+    }
+    .meter{
+      height: 8px;
+      background: rgba(255,255,255,.10);
+      border:1px solid var(--border);
+      border-radius: 999px;
+      overflow:hidden;
+      margin-top: 10px;
+    }
+    .bar{
+      height: 100%;
+      width: 0%;
+      background: rgba(94,163,255,.75);
+      transition: width .15s linear;
+    }
+
+    /* Audio list */
+    .list{
+      margin-top: 14px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .item{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding: 10px 10px;
+      border-radius: 12px;
+      border:1px solid var(--border);
+      background: rgba(0,0,0,.18);
+    }
+    .meta{
+      display:flex; flex-direction:column; gap:2px;
+      min-width: 0;
+    }
+    .meta .name{
+      font-weight:650;
+      font-size: 14px;
+      overflow:hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 420px;
+    }
+    .meta .sub{
+      color: var(--muted);
+      font-size: 12px;
+      font-family: var(--mono);
+    }
+    audio{ width: 100%; max-width: 340px; }
+    .item .spacer{ flex:1; }
+
+    /* Simple navigation */
+    .navbtns{ display:flex; gap:10px; }
+    .hidden{ display:none !important; }
+
+    @media (max-width: 720px){
+      .meta .name{ max-width: 210px; }
+      audio{ max-width: 100%; }
+      .item{ flex-wrap:wrap; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+
+    <div class="topbar">
+      <div class="title">朗读练习</div>
+      <div class="navbtns">
+        <button id="btnBack" class="btn hidden">返回输入</button>
+      </div>
+    </div>
+
+    <!-- View 1 -->
+    <section id="viewInput" class="card">
+      <div class="card-hd">
+        <div>输入文本</div>
+        <div class="hint">生成后进入朗读界面；可随时返回修改文本。</div>
+      </div>
+      <div class="card-bd">
+        <textarea id="inputText" placeholder="在这里粘贴或输入要朗读的文字（支持换行）。"></textarea>
+        <div class="row" style="margin-top:12px;">
+          <button id="btnGenerate" class="btn primary">生成</button>
+          <div class="spacer"></div>
+          <div class="hint">提示：拼音会按“逐字”展示，主要适合普通话朗读训练；多音字会按库的默认读音推断。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- View 2 -->
+    <section id="viewPractice" class="card hidden">
+      <div class="card-hd">
+        <div class="row" style="width:100%;">
+          <div>朗读文本</div>
+          <div class="spacer"></div>
+          <div class="toggle" title="在每个汉字上方显示拼音">
+            <span>显示拼音</span>
+            <div id="togglePinyin" class="switch" role="switch" aria-checked="false">
+              <div class="knob"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card-bd">
+        <div id="display" class="display"></div>
+
+        <div class="recbox">
+          <div class="row">
+            <button id="btnRec" class="btn ok">开始录音</button>
+            <button id="btnStop" class="btn danger" disabled>停止</button>
+            <button id="btnSave" class="btn" disabled>保存</button>
+            <div class="spacer"></div>
+            <div class="hint" id="formatHint"></div>
+          </div>
+
+          <div class="meter" aria-hidden="true">
+            <div id="bar" class="bar"></div>
+          </div>
+
+          <div class="status" id="status">状态：未录音</div>
+        </div>
+
+        <div style="margin-top:12px;" class="hint">最近保存的音频（最多保留4条，超出会自动删除最旧的）。</div>
+        <div id="audioList" class="list"></div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    // ---------- Utilities ----------
+    const $ = (sel) => document.querySelector(sel);
+    const nowTs = () => Date.now();
+
+    function fmtTime(ts){
+      const d = new Date(ts);
+      const pad = (n)=> String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    function isChineseChar(ch){
+      // Basic CJK Unified Ideographs + Extension A (common enough for classroom text)
+      return /[\u3400-\u4DBF\u4E00-\u9FFF]/.test(ch);
+    }
+
+    // ---------- IndexedDB (audio storage) ----------
+    const DB_NAME = "reading_practice_db";
+    const DB_VER = 1;
+    const STORE = "audios";
+
+    function openDB(){
+      return new Promise((resolve, reject)=>{
+        const req = indexedDB.open(DB_NAME, DB_VER);
+        req.onupgradeneeded = (e)=>{
+          const db = req.result;
+          if(!db.objectStoreNames.contains(STORE)){
+            const store = db.createObjectStore(STORE, { keyPath: "id" });
+            store.createIndex("createdAt", "createdAt", { unique:false });
+          }
+        };
+        req.onsuccess = ()=> resolve(req.result);
+        req.onerror = ()=> reject(req.error);
+      });
+    }
+
+    async function dbPutAudio(rec){
+      const db = await openDB();
+      return new Promise((resolve, reject)=>{
+        const tx = db.transaction(STORE, "readwrite");
+        tx.objectStore(STORE).put(rec);
+        tx.oncomplete = ()=> resolve(true);
+        tx.onerror = ()=> reject(tx.error);
+      });
+    }
+
+    async function dbGetAllAudios(){
+      const db = await openDB();
+      return new Promise((resolve, reject)=>{
+        const tx = db.transaction(STORE, "readonly");
+        const store = tx.objectStore(STORE);
+        const req = store.getAll();
+        req.onsuccess = ()=> resolve(req.result || []);
+        req.onerror = ()=> reject(req.error);
+      });
+    }
+
+    async function dbDeleteAudio(id){
+      const db = await openDB();
+      return new Promise((resolve, reject)=>{
+        const tx = db.transaction(STORE, "readwrite");
+        tx.objectStore(STORE).delete(id);
+        tx.oncomplete = ()=> resolve(true);
+        tx.onerror = ()=> reject(tx.error);
+      });
+    }
+
+    // ---------- App State ----------
+    let currentText = "";
+    let showPinyin = false;
+
+    // Recorder state
+    let mediaStream = null;
+    let mediaRecorder = null;
+    let chunks = [];
+    let lastBlob = null;
+    let recStartAt = 0;
+    let meterTimer = null;
+
+    // Try to pick a supported mimeType
+    function pickMimeType(){
+      const candidates = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4",       // some Safari versions
+        "audio/aac",
+        "audio/ogg;codecs=opus",
+        "audio/ogg"
+      ];
+      for (const t of candidates){
+        if (window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(t)) return t;
+      }
+      return ""; // let browser decide
+    }
+
+    const MIME = pickMimeType();
+
+    // ---------- Pinyin rendering ----------
+    function renderTextWithPinyin(text, show){
+      // Use pinyin-pro for whole text -> pinyin array aligned by char
+      // We use pinyin(text, { type:'array', toneType:'symbol', nonZh:'spaced' })
+      // Note: nonZh:'spaced' inserts non-Chinese chunks as separate array elements; alignment is not strictly 1:1 with original.
+      // So we do a safer per-character approach for Chinese chars only.
+      const { pinyin } = window.pinyinPro || {};
+      const frag = document.createDocumentFragment();
+
+      for (const ch of text){
+        if (isChineseChar(ch)){
+          const py = pinyin ? pinyin(ch, { toneType: "symbol" }) : "";
+          const span = document.createElement("span");
+          span.className = "zh";
+
+          const pyEl = document.createElement("span");
+          pyEl.className = "py" + (show ? "" : " hidden");
+          pyEl.textContent = (py || "").replace(/\s+/g," ");
+
+          const hzEl = document.createElement("span");
+          hzEl.className = "hz";
+          hzEl.textContent = ch;
+
+          span.appendChild(pyEl);
+          span.appendChild(hzEl);
+          frag.appendChild(span);
+        }else{
+          // keep punctuation / whitespace as-is
+          frag.appendChild(document.createTextNode(ch));
+        }
+      }
+
+      const box = $("#display");
+      box.innerHTML = "";
+      box.appendChild(frag);
+    }
+
+    // ---------- View switching ----------
+    function showView(name){
+      const v1 = $("#viewInput");
+      const v2 = $("#viewPractice");
+      const back = $("#btnBack");
+
+      if(name === "input"){
+        v1.classList.remove("hidden");
+        v2.classList.add("hidden");
+        back.classList.add("hidden");
+      }else{
+        v1.classList.add("hidden");
+        v2.classList.remove("hidden");
+        back.classList.remove("hidden");
+      }
+    }
+
+    // ---------- Audio list UI ----------
+    async function refreshAudioList(){
+      const list = $("#audioList");
+      list.innerHTML = "";
+
+      let items = await dbGetAllAudios();
+      items.sort((a,b)=> b.createdAt - a.createdAt);
+      items = items.slice(0,4);
+
+      if(items.length === 0){
+        const empty = document.createElement("div");
+        empty.className = "hint";
+        empty.textContent = "暂无保存的录音。";
+        list.appendChild(empty);
+        return;
+      }
+
+      for (const it of items){
+        const row = document.createElement("div");
+        row.className = "item";
+
+        const meta = document.createElement("div");
+        meta.className = "meta";
+
+        const name = document.createElement("div");
+        name.className = "name";
+        name.textContent = it.title || "朗读录音";
+
+        const sub = document.createElement("div");
+        sub.className = "sub";
+        sub.textContent = `${fmtTime(it.createdAt)}  |  ${Math.round((it.durationMs||0)/1000)}s  |  ${it.mimeType || "unknown"}`;
+
+        meta.appendChild(name);
+        meta.appendChild(sub);
+
+        const audio = document.createElement("audio");
+        audio.controls = true;
+        audio.preload = "metadata";
+        audio.src = URL.createObjectURL(it.blob);
+
+        const spacer = document.createElement("div");
+        spacer.className = "spacer";
+
+        const del = document.createElement("button");
+        del.className = "btn danger";
+        del.textContent = "删除";
+        del.onclick = async ()=>{
+          // stop any playback first
+          try { audio.pause(); } catch(e){}
+          await dbDeleteAudio(it.id);
+          await refreshAudioList();
+        };
+
+        row.appendChild(meta);
+        row.appendChild(audio);
+        row.appendChild(spacer);
+        row.appendChild(del);
+
+        list.appendChild(row);
+      }
+    }
+
+    // enforce max 4 saved audios in db
+    async function enforceMax4(){
+      let items = await dbGetAllAudios();
+      items.sort((a,b)=> b.createdAt - a.createdAt);
+      const extra = items.slice(4);
+      for (const it of extra){
+        await dbDeleteAudio(it.id);
+      }
+    }
+
+    // ---------- Recorder ----------
+    function setStatus(s){
+      $("#status").textContent = s;
+    }
+
+    function setButtons({rec, stop, save}){
+      $("#btnRec").disabled = !rec;
+      $("#btnStop").disabled = !stop;
+      $("#btnSave").disabled = !save;
+    }
+
+    function startMeter(){
+      const bar = $("#bar");
+      let t0 = nowTs();
+      meterTimer = setInterval(()=>{
+        const dt = nowTs() - t0;
+        // faux progress pulse (no audio level analysis; keeps UI responsive & simple)
+        const phase = (dt % 1200) / 1200;
+        const w = 15 + Math.round(70 * Math.abs(Math.sin(phase * Math.PI)));
+        bar.style.width = w + "%";
+      }, 120);
+    }
+
+    function stopMeter(){
+      const bar = $("#bar");
+      if(meterTimer) clearInterval(meterTimer);
+      meterTimer = null;
+      bar.style.width = "0%";
+    }
+
+    async function startRecording(){
+      lastBlob = null;
+      chunks = [];
+
+      if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+        setStatus("状态：当前浏览器不支持录音（缺少 getUserMedia）。");
+        return;
+      }
+
+      try{
+        mediaStream = await navigator.mediaDevices.getUserMedia({ audio:true });
+      }catch(err){
+        setStatus("状态：麦克风权限获取失败。请检查浏览器权限设置。");
+        return;
+      }
+
+      try{
+        const opts = MIME ? { mimeType: MIME } : undefined;
+        mediaRecorder = new MediaRecorder(mediaStream, opts);
+      }catch(err){
+        // fallback without opts
+        try{
+          mediaRecorder = new MediaRecorder(mediaStream);
+        }catch(e2){
+          setStatus("状态：MediaRecorder 初始化失败（该浏览器可能不支持录音编码）。");
+          try { mediaStream.getTracks().forEach(t=>t.stop()); } catch(e){}
+          mediaStream = null;
+          return;
+        }
+      }
+
+      recStartAt = nowTs();
+      setButtons({rec:false, stop:true, save:false});
+      setStatus(`状态：录音中…\n编码：${mediaRecorder.mimeType || MIME || "browser-default"}`);
+      startMeter();
+
+      mediaRecorder.ondataavailable = (e)=>{
+        if(e.data && e.data.size > 0) chunks.push(e.data);
+      };
+      mediaRecorder.onstop = ()=>{
+        stopMeter();
+        const durationMs = nowTs() - recStartAt;
+        lastBlob = new Blob(chunks, { type: mediaRecorder.mimeType || MIME || "audio/webm" });
+        setButtons({rec:true, stop:false, save:true});
+        setStatus(`状态：录音已停止（${Math.round(durationMs/1000)}s）。可保存。`);
+      };
+
+      mediaRecorder.start();
+    }
+
+    async function stopRecording(){
+      if(!mediaRecorder) return;
+      try{
+        mediaRecorder.stop();
+      }catch(e){}
+
+      try{
+        if(mediaStream) mediaStream.getTracks().forEach(t=>t.stop());
+      }catch(e){}
+      mediaStream = null;
+    }
+
+    async function saveRecording(){
+      if(!lastBlob){
+        setStatus("状态：没有可保存的录音。");
+        return;
+      }
+      const durationMs = nowTs() - recStartAt;
+      const id = "a_" + nowTs() + "_" + Math.random().toString(16).slice(2);
+
+      const title = currentText
+        ? ("朗读：" + currentText.trim().slice(0, 14).replace(/\s+/g," ") + (currentText.trim().length > 14 ? "…" : ""))
+        : "朗读录音";
+
+      const rec = {
+        id,
+        createdAt: nowTs(),
+        durationMs,
+        mimeType: lastBlob.type || (mediaRecorder && mediaRecorder.mimeType) || MIME || "unknown",
+        blob: lastBlob
+      };
+
+      await dbPutAudio(rec);
+      await enforceMax4();
+      await refreshAudioList();
+
+      lastBlob = null;
+      setButtons({rec:true, stop:false, save:false});
+      setStatus("状态：已保存。");
+    }
+
+    // ---------- Events ----------
+    $("#btnGenerate").addEventListener("click", async ()=>{
+      const text = $("#inputText").value || "";
+      const cleaned = text.replace(/\r\n/g,"\n").trim();
+      if(!cleaned){
+        alert("请输入要朗读的文本。");
+        return;
+      }
+      currentText = cleaned;
+      showView("practice");
+      renderTextWithPinyin(currentText, showPinyin);
+      await refreshAudioList();
+    });
+
+    $("#btnBack").addEventListener("click", ()=>{
+      // stop recording if active
+      try{
+        if(mediaRecorder && mediaRecorder.state === "recording") mediaRecorder.stop();
+      }catch(e){}
+      try{
+        if(mediaStream) mediaStream.getTracks().forEach(t=>t.stop());
+      }catch(e){}
+      mediaStream = null;
+      mediaRecorder = null;
+      stopMeter();
+      setButtons({rec:true, stop:false, save:false});
+      setStatus("状态：未录音");
+
+      $("#inputText").value = currentText || $("#inputText").value;
+      showView("input");
+    });
+
+    $("#togglePinyin").addEventListener("click", ()=>{
+      showPinyin = !showPinyin;
+      const sw = $("#togglePinyin");
+      sw.classList.toggle("on", showPinyin);
+      sw.setAttribute("aria-checked", String(showPinyin));
+      renderTextWithPinyin(currentText, showPinyin);
+    });
+
+    $("#btnRec").addEventListener("click", startRecording);
+    $("#btnStop").addEventListener("click", stopRecording);
+    $("#btnSave").addEventListener("click", saveRecording);
+
+    // Show supported format hint
+    $("#formatHint").textContent = MIME ? `优先编码：${MIME}` : "编码：由浏览器自动选择";
+
+    // initial state
+    showView("input");
+    setButtons({rec:true, stop:false, save:false});
+  </script>
+</body>
+</html>
+
