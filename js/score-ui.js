@@ -28,7 +28,8 @@ function showLiveHeard(text){
   $("#scoreHeard").textContent = text;
 }
 
-function renderBrowserScore(targetText, heardText){
+function renderBrowserScore(targetText, heardText, source){
+  $("#scoreTitle").textContent = source === "azure" ? "逐字对照（Azure 识别）" : "逐字对照（浏览器识别）";
   const box = $("#scoreBox");
   box.classList.remove("hidden");
   $("#scoreHeard").textContent = heardText || "（没有识别到内容）";
@@ -37,7 +38,13 @@ function renderBrowserScore(targetText, heardText){
 
   const err = speechErrorText();
   if(!heardText){
-    $("#scoreSummary").textContent = err ? `无法评分：${err}。` : "没有识别到朗读内容，请靠近麦克风再试一次。";
+    if(source === "azure"){
+      $("#scoreSummary").textContent = "没有识别到朗读内容，请靠近麦克风再试一次。";
+      return null;
+    }
+    $("#scoreSummary").textContent = (err ? `无法评分：${err}。` : "没有识别到朗读内容，请靠近麦克风再试一次。")
+      + (azureEnabled() ? "可以点“发音评分”改用 Azure。" : "")
+      + "\n" + speechDiagnostics();
     return null;
   }
   const { pinyin } = window.pinyinPro || {};
@@ -73,6 +80,10 @@ function renderAzureScore(result){
     return;
   }
   const pa = best.PronunciationAssessment || best;
+  // 用 Azure 的识别文字做逐字对照（浏览器识别没结果时尤其有用）
+  if(!$("#scoreChars").children.length){
+    renderBrowserScore(currentText, best.Display || best.Lexical || "", "azure");
+  }
   const fmt = (v)=> v == null ? "-" : Math.round(v);
   $("#azureSummary").textContent =
     `发音总分 ${fmt(pa.PronScore)} · 准确度 ${fmt(pa.AccuracyScore)} · 流利度 ${fmt(pa.FluencyScore)} · 完整度 ${fmt(pa.CompletenessScore)}`;

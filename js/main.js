@@ -41,7 +41,7 @@ $("#btnBack").addEventListener("click", ()=>{
   mediaStream = null;
   mediaRecorder = null;
   abortSpeech();
-  scoringThisTake = false;
+  scoringThisTake = "";
   lastBlob = null;
   clearScore();
   stopMeter();
