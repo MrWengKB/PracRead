@@ -44,14 +44,20 @@ async function azureAssess(blob, referenceText){
   const { wav, seconds } = await blobToWav16k(blob);
   if(seconds > 60) throw new Error("录音超过 60 秒，Azure 单次最多评 60 秒。请把文本分段朗读。");
   const url = AZURE_PROXY_URL.replace(/\/+$/, "") + "/assess";
-  const resp = await fetch(url, {
+  let resp;
+  try{
+    resp = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "audio/wav",
       "X-Reference-Text": encodeURIComponent(referenceText)
     },
-    body: wav
-  });
+      body: wav
+    });
+  }catch(e){
+    // 网络层失败（含 CORS 被拦）：浏览器只给 "Failed to fetch"
+    throw new Error(`连不上评分服务（${e && e.message ? e.message : e}）。请在浏览器打开 ${AZURE_PROXY_URL.replace(/\/+$/, "")}/ 检查：应显示 "service": "pracread-azure"；若显示 Hello World，说明 Worker 代码还没换成 azure-proxy.js。`);
+  }
   if(!resp.ok){
     const t = await resp.text().catch(()=> "");
     throw new Error(`评分服务出错（${resp.status}）${t ? "：" + t.slice(0, 200) : ""}`);
