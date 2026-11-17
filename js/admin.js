@@ -99,6 +99,16 @@ async function saveSheetSettings(){
     loadClasses();
   }catch(e){
     setMsg("#sheetMsg", "连接失败：" + e.message, "err");
+    const testUrl = e.testUrl || (teacherSheetUrl() + "?action=ping");
+    const p = document.createElement("div");
+    p.className = "hint";
+    p.style.marginTop = "6px";
+    const link = document.createElement("a");
+    link.href = testUrl; link.target = "_blank"; link.rel = "noopener";
+    link.textContent = "打开测试链接";
+    link.style.color = "var(--accent)";
+    p.append(link, "：正常会显示 {\"ok\":true,\"service\":\"pracread-sheet\",…}。如果要你登录 Google、显示“无法打开文件 / 找不到网页”，或显示 Script function not found: doGet，请按设置说明检查部署。");
+    $("#sheetMsg").appendChild(p);
   }
 }
 

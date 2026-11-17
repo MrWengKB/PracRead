@@ -33,7 +33,9 @@ async function sheetCall(url, payload){
       redirect: "follow"
     });
   }catch(e){
-    throw new Error("连不上成绩表服务，请检查网络。");
+    const err = new Error("连不上成绩表服务。最常见的原因是部署时「谁可以访问」没有选「任何人」。请点下面的测试链接看看显示什么。");
+    err.testUrl = url + "?action=ping";
+    throw err;
   }
   const t = await resp.text();
   let data;
